@@ -214,28 +214,27 @@ class Driver extends Thread {
         lblCount.setText("קטף: " + c + " תפוזים");
     }
 }
-// --- ממשק הנהג ---
-class DriverUI extends JPanel {
-    private JLabel lblStatus;
-    private JLabel lblCount;
-
-    public DriverUI(String name) {
-        setLayout(new GridLayout(2, 1));
-        setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        setBackground(Color.CYAN);
-
-        lblStatus = new JLabel(name + ": מוכן");
-        lblCount = new JLabel("לקח: 0");
-
-        add(lblStatus);
-        add(lblCount);
+    // --- ממשק הנהג ---
+    class DriverUI extends JPanel
+    {
+        private JLabel lblStatus;
+        private JLabel lblCount;
+        public DriverUI(String name)
+        {
+            setLayout(new GridLayout(2, 1));
+            setBorder(BorderFactory.createLineBorder(Color.BLACK));
+            setBackground(Color.CYAN);
+            lblStatus = new JLabel(name + ": מוכן");
+            lblCount = new JLabel("אסף: 0 תפוזים"); // אתחול התחלתי ברור
+            add(lblStatus);
+            add(lblCount);
+        }
+        public void setStatus(String text)
+        {
+            lblStatus.setText(text);
+        }
+        public void setCount(int c)
+        {
+            lblCount.setText("אסף: " + c + " תפוזים"); // <--- השינוי כאן
+        }
     }
-
-    public void setStatus(String text) {
-        lblStatus.setText(text);
-    }
-
-    public void setCount(int c) {
-        lblCount.setText("לקח: " + c);
-    }
-}
