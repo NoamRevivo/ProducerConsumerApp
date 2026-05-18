@@ -5,271 +5,237 @@ import java.util.Random;
 public class ProducerConsumerApp extends JFrame {
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            new ProducerConsumerApp().setVisible(true);
-        });
+        // רץ רגיל בלי InvokeLater של מתכנתים מתקדמים
+        ProducerConsumerApp app = new ProducerConsumerApp();
+        app.setVisible(true);
     }
-
     public ProducerConsumerApp() {
-        setTitle("Producer Consumer - Oranges");
+        setTitle("בעיית יצרן צרכן - תפוזים");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(900, 600);
+        setSize(950, 600);
         setLayout(new BorderLayout());
-
         Warehouse warehouse = new Warehouse();
-
-        // פאנל חקלאים - צד ימין [cite: 23]
-        JPanel farmersPanel = new JPanel(new GridLayout(3, 1, 10, 10));
-        farmersPanel.setBorder(BorderFactory.createTitledBorder("Farmers (Producers)"));
+        // פאנל חקלאים
+        JPanel farmersPanel = new JPanel(new GridLayout(3, 1, 5, 5));
+        farmersPanel.setBorder(BorderFactory.createTitledBorder("חקלאים"));
         farmersPanel.setPreferredSize(new Dimension(250, 0));
-
-        // פאנל נהגים - צד שמאל [cite: 23]
-        JPanel driversPanel = new JPanel(new GridLayout(3, 1, 10, 10));
-        driversPanel.setBorder(BorderFactory.createTitledBorder("Drivers (Consumers)"));
+        // פאנל נהגים
+        JPanel driversPanel = new JPanel(new GridLayout(3, 1, 5, 5));
+        driversPanel.setBorder(BorderFactory.createTitledBorder("נהגים"));
         driversPanel.setPreferredSize(new Dimension(250, 0));
-
-        // יצירת והפעלת התהליכונים
+        // יצירת חקלאים ונהגים
         for (int i = 1; i <= 3; i++) {
-            FarmerUI farmerUI = new FarmerUI("Farmer " + i);
+            FarmerUI farmerUI = new FarmerUI("חקלאי " + i);
             farmersPanel.add(farmerUI);
-            new Farmer(warehouse, farmerUI).start();
+            Farmer f = new Farmer(warehouse, farmerUI);
+            f.start();
         }
-
         for (int i = 1; i <= 3; i++) {
-            DriverUI driverUI = new DriverUI("Driver " + i);
+            DriverUI driverUI = new DriverUI("נהג " + i);
             driversPanel.add(driverUI);
-            new Driver(warehouse, driverUI).start();
+            Driver d = new Driver(warehouse, driverUI);
+            d.start();
         }
-
-        // פאנל תחתון - כפתורי קיבולת מחסן [cite: 40]
+        // כפתורים
         JPanel controlPanel = new JPanel();
-        JButton btnInc = new JButton("Increase Capacity");
-        JButton btnDec = new JButton("Decrease Capacity");
-
+        JButton btnInc = new JButton("הגדל קיבולת");
+        JButton btnDec = new JButton("הקטן קיבולת");
         btnInc.addActionListener(e -> warehouse.changeCapacity(1));
         btnDec.addActionListener(e -> warehouse.changeCapacity(-1));
-
         controlPanel.add(btnInc);
         controlPanel.add(btnDec);
-
-        add(driversPanel, BorderLayout.WEST); // צד שמאל [cite: 23]
-        add(warehouse, BorderLayout.CENTER); // אמצע [cite: 23]
-        add(farmersPanel, BorderLayout.EAST); // צד ימין [cite: 23]
+        add(driversPanel, BorderLayout.WEST);
+        add(warehouse, BorderLayout.CENTER);
+        add(farmersPanel, BorderLayout.EAST);
         add(controlPanel, BorderLayout.SOUTH);
     }
 }
-
-// --- מחלקת המחסן (The Monitor) ---
+// --- מחלקת המחסן ---
 class Warehouse extends JPanel {
     private int capacity = 10;
     private int oranges = 0;
 
     public Warehouse() {
-        setBorder(BorderFactory.createTitledBorder("Warehouse"));
+        setBorder(BorderFactory.createTitledBorder("מחסן תפוזים"));
     }
 
-    // מתודה מסונכרנת להכנסת תפוז על ידי חקלאי
-    public synchronized long putOrange(long accumulatedWait) throws InterruptedException {
-        long startWait = System.currentTimeMillis();
+    // מכניס תפוז
+    public synchronized long putOrange(long waitTimeSoFar) throws InterruptedException {
+        long t1 = System.currentTimeMillis();
+        while (oranges >= capacity) {
+            long timePassed = System.currentTimeMillis() - t1;
+            long timeLeft = 10000 - waitTimeSoFar - timePassed;
 
-        while (oranges >= capacity) { // המתנה עד שיהיה מקום פנוי [cite: 28]
-            long currentWait = System.currentTimeMillis() - startWait;
-            long timeLeftToFire = 10000 - accumulatedWait - currentWait;
-
-            if (timeLeftToFire <= 0) {
-                return -1; // החקלאי בזבז מעל 10 שניות ולכן מפוטר [cite: 30]
+            if (timeLeft <= 0) {
+                return -1; // עברו 10 שניות, מחזיר -1 כדי לפטר
             }
-            wait(timeLeftToFire); // ישן ולא מבזבז CPU 
+            wait(timeLeft); // ישן עד שיהיה מקום או שייגמר הזמן
         }
-
-        long actualWaitThisTurn = System.currentTimeMillis() - startWait;
+        long t2 = System.currentTimeMillis();
         oranges++;
-        repaint(); // עדכון הממשק הגרפי
-        notifyAll(); // מעיר את הנהגים שממתינים לתפוזים 
-        return actualWaitThisTurn;
+        repaint();
+        notifyAll(); // מעיר נהגים
+        return (t2 - t1); // מחזיר כמה זמן הוא חיכה הפעם
     }
 
-    // מתודה מסונכרנת להוצאת תפוז על ידי נהג
-    public synchronized long takeOrange(long accumulatedWait) throws InterruptedException {
-        long startWait = System.currentTimeMillis();
+    // מוציא תפוז
+    public synchronized long takeOrange(long waitTimeSoFar) throws InterruptedException {
+        long t1 = System.currentTimeMillis();
 
-        while (oranges == 0) { // המתנה עד שיהיו תפוזים [cite: 35]
-            long currentWait = System.currentTimeMillis() - startWait;
-            long timeLeftToFire = 10000 - accumulatedWait - currentWait;
+        while (oranges == 0) {
+            long timePassed = System.currentTimeMillis() - t1;
+            long timeLeft = 10000 - waitTimeSoFar - timePassed;
 
-            if (timeLeftToFire <= 0) {
-                return -1; // הנהג בזבז מעל 10 שניות ולכן מפוטר [cite: 36]
+            if (timeLeft <= 0) {
+                return -1; // עברו 10 שניות, מפוטר
             }
-            wait(timeLeftToFire);
+            wait(timeLeft);
         }
-
-        long actualWaitThisTurn = System.currentTimeMillis() - startWait;
+        long t2 = System.currentTimeMillis();
         oranges--;
         repaint();
-        notifyAll(); // מעיר חקלאים שממתינים למקום פנוי 
-        return actualWaitThisTurn;
+        notifyAll(); // מעיר חקלאים
+        return (t2 - t1);
     }
-
     public synchronized void changeCapacity(int amount) {
         if (capacity + amount >= oranges && capacity + amount > 0) {
             capacity += amount;
             repaint();
-            notifyAll(); // אם הגדלנו קיבולת, נעיר את החקלאים שאולי ישנו
+            notifyAll();
         }
     }
-
-    // ציור המחסן והתפוזים בצורות בסיסיות [cite: 24, 25]
+    // מצייר את המחסן
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        g.drawString("Capacity: " + capacity, 10, 20);
-        g.drawString("Oranges inside: " + oranges, 10, 40);
-
-        int x = 10;
-        int y = 60;
+        g.drawString("קיבולת: " + capacity, 20, 30);
+        g.drawString("תפוזים: " + oranges, 20, 50);
+        int x = 20;
+        int y = 70;
         for (int i = 0; i < capacity; i++) {
             if (i < oranges) {
                 g.setColor(Color.ORANGE);
-                g.fillOval(x, y, 30, 30); // תפוז קיים
+                g.fillOval(x, y, 30, 30);
             } else {
                 g.setColor(Color.LIGHT_GRAY);
-                g.drawOval(x, y, 30, 30); // מקום פנוי לתפוז
+                g.drawOval(x, y, 30, 30);
             }
             x += 40;
-            if (x > getWidth() - 40) { // מעבר שורה בציור
-                x = 10;
+            if (x > getWidth() - 50) {
+                x = 20;
                 y += 40;
             }
         }
     }
 }
-
-// --- מחלקת החקלאי (Producer) ---
+// --- מחלקת החקלאי ---
 class Farmer extends Thread {
-    private final Warehouse warehouse;
-    private final FarmerUI ui;
-    private long totalWaitTime = 0; // סכימת זמן ההמתנה [cite: 29]
-    private int producedCount = 0;
-    private final Random rand = new Random();
-
-    public Farmer(Warehouse warehouse, FarmerUI ui) {
-        this.warehouse = warehouse;
+    private Warehouse warehouse;
+    private FarmerUI ui;
+    private long totalWait = 0;
+    private int count = 0;
+    private Random rand = new Random();
+    public Farmer(Warehouse w, FarmerUI ui) {
+        this.warehouse = w;
         this.ui = ui;
     }
-
     @Override
     public void run() {
         try {
             while (true) {
-                ui.updateStatus("Picking oranges...");
-                Thread.sleep(rand.nextInt(3001)); // קטיף למשך עד 3 שניות [cite: 27]
-
-                ui.updateStatus("Waiting to store...");
-                long waitThisTurn = warehouse.putOrange(totalWaitTime);
-
-                if (waitThisTurn == -1) {
-                    ui.updateStatus("FIRED! (Wait > 10s)"); // מפוטר ולא קוטף יותר [cite: 30, 31]
+                ui.setStatus("קוטף...");
+                Thread.sleep(rand.nextInt(3000)); // עד 3 שניות
+                ui.setStatus("ממתין למחסן...");
+                long waitedNow = warehouse.putOrange(totalWait);
+                if (waitedNow == -1) {
+                    ui.setStatus("מפוטר!");
                     break;
                 }
-
-                totalWaitTime += waitThisTurn;
-                producedCount++;
-                ui.updateCount(producedCount); // עדכון הלייב של המונה 
+                totalWait += waitedNow;
+                count++;
+                ui.setCount(count);
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 }
-
-// --- מחלקת הנהג (Consumer) ---
+// --- מחלקת הנהג ---
 class Driver extends Thread {
-    private final Warehouse warehouse;
-    private final DriverUI ui;
-    private long totalWaitTime = 0; // סכימת זמן המתנה
-    private int consumedCount = 0;
-    private final Random rand = new Random();
-
-    public Driver(Warehouse warehouse, DriverUI ui) {
-        this.warehouse = warehouse;
+    private Warehouse warehouse;
+    private DriverUI ui;
+    private long totalWait = 0;
+    private int count = 0;
+    private Random rand = new Random();
+    public Driver(Warehouse w, DriverUI ui) {
+        this.warehouse = w;
         this.ui = ui;
     }
-
     @Override
     public void run() {
         try {
             while (true) {
-                ui.updateStatus("Waiting at home...");
-                Thread.sleep(rand.nextInt(2000)); // מצב המתנה התחלתי [cite: 33]
-
-                ui.updateStatus("Driving to warehouse...");
-                Thread.sleep(2000 + rand.nextInt(1001)); // נסיעה בין 2-3 שניות [cite: 34]
-
-                ui.updateStatus("Loading oranges...");
-                long waitThisTurn = warehouse.takeOrange(totalWaitTime);
-
-                if (waitThisTurn == -1) {
-                    ui.updateStatus("FIRED! (Wait > 10s)"); // מפוטר ולא חוזר לאסוף [cite: 36]
+                ui.setStatus("נח בבית...");
+                Thread.sleep(rand.nextInt(2000));
+                ui.setStatus("נוסע...");
+                Thread.sleep(2000 + rand.nextInt(1000)); // 2 עד 3 שניות
+                ui.setStatus("מנסה לקחת...");
+                long waitedNow = warehouse.takeOrange(totalWait);
+                if (waitedNow == -1) {
+                    ui.setStatus("מפוטר!");
                     break;
                 }
-
-                totalWaitTime += waitThisTurn;
-                consumedCount++;
-                ui.updateCount(consumedCount); // עדכון הלייב של המונה
+                totalWait += waitedNow;
+                count++;
+                ui.setCount(count);
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 }
-
-// --- מחלקות הממשק הגרפי לחקלאי ונהג (בסיסיות) [cite: 24] ---
-class FarmerUI extends JPanel {
-    private JLabel statusLabel;
-    private JLabel countLabel;
-
+// --- ממשק החקלאי ---
+    class FarmerUI extends JPanel {
+    private JLabel lblStatus;
+    private JLabel lblCount;
     public FarmerUI(String name) {
         setLayout(new GridLayout(2, 1));
         setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        setBackground(new Color(200, 255, 200)); // צבע ירקרק לחקלאי
-
-        statusLabel = new JLabel(name + ": Ready");
-        countLabel = new JLabel("Produced: 0"); // המונה שמתעדכן בלייב
-
-        add(statusLabel);
-        add(countLabel);
+        setBackground(Color.GREEN);
+        lblStatus = new JLabel(name + ": מוכן");
+        lblCount = new JLabel("קטף: 0");
+        add(lblStatus);
+        add(lblCount);
     }
-
-    public void updateStatus(String status) {
-        SwingUtilities.invokeLater(() -> statusLabel.setText(status));
+    public void setStatus(String text) {
+        lblStatus.setText(text);
     }
-
-    public void updateCount(int count) {
-        SwingUtilities.invokeLater(() -> countLabel.setText("Produced: " + count));
+    public void setCount(int c) {
+        lblCount.setText("קטף: " + c + " תפוזים");
     }
 }
-
+// --- ממשק הנהג ---
 class DriverUI extends JPanel {
-    private JLabel statusLabel;
-    private JLabel countLabel;
+    private JLabel lblStatus;
+    private JLabel lblCount;
 
     public DriverUI(String name) {
         setLayout(new GridLayout(2, 1));
         setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        setBackground(new Color(200, 200, 255)); // צבע כחלחל לנהג
+        setBackground(Color.CYAN);
 
-        statusLabel = new JLabel(name + ": Ready");
-        countLabel = new JLabel("Taken: 0"); // המונה שמתעדכן בלייב
+        lblStatus = new JLabel(name + ": מוכן");
+        lblCount = new JLabel("לקח: 0");
 
-        add(statusLabel);
-        add(countLabel);
+        add(lblStatus);
+        add(lblCount);
     }
 
-    public void updateStatus(String status) {
-        SwingUtilities.invokeLater(() -> statusLabel.setText(status));
+    public void setStatus(String text) {
+        lblStatus.setText(text);
     }
 
-    public void updateCount(int count) {
-        SwingUtilities.invokeLater(() -> countLabel.setText("Taken: " + count));
+    public void setCount(int c) {
+        lblCount.setText("לקח: " + c);
     }
 }
