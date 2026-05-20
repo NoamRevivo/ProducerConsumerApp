@@ -1,34 +1,31 @@
 package org.example;
-
 import java.util.Random;
-
-public abstract class WorkerThread extends Thread {
+public abstract class WorkerThread extends Thread
+{
     protected Warehouse warehouse;
     protected WorkerPanel myPanel;
     protected long totalWaitTime;
     protected int orangesHandled;
     protected Random randomGenerator;
-
-    public WorkerThread(Warehouse warehouse, WorkerPanel panel) {
+    public WorkerThread(Warehouse warehouse, WorkerPanel panel)
+    {
         this.warehouse = warehouse;
         this.myPanel = panel;
         this.totalWaitTime = 0;
         this.orangesHandled = 0;
         this.randomGenerator = new Random();
     }
-
     @Override
-    public void run() {
+    public void run()
+    {
         try {
-            while (true) {
-                // קריאה פולימורפית
+            while (true)
+            {
                 boolean stillWorking = doWork();
-
                 if (stillWorking == false) {
                     myPanel.updateStatus("מפוטר! (המתין מעל 10 שניות)");
                     break;
                 }
-
                 orangesHandled = orangesHandled + 1;
                 myPanel.updateCount(orangesHandled);
             }
@@ -36,7 +33,5 @@ public abstract class WorkerThread extends Thread {
             System.out.println("התהליך הופסק באופן חריג.");
         }
     }
-
-    // פולימורפיזם - הבנים יממשו את זה
     protected abstract boolean doWork() throws InterruptedException;
 }
