@@ -1,62 +1,64 @@
 package org.example;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-    public class ProducerConsumerApp extends JFrame
-    {
-        public static void main(String[] args)
-        {
-            ProducerConsumerApp app = new ProducerConsumerApp();
-            app.setVisible(true);
+public class ProducerConsumerApp extends JFrame {
+
+    private static final int WINDOW_WIDTH = 1000;
+    private static final int WINDOW_HEIGHT = 650;
+
+    private static final int NUM_FARMERS = 3;
+    private static final int NUM_DRIVERS = 3;
+
+    //  קבועים לעיצוב הפאנלים
+    private static final int SIDE_PANEL_WIDTH = 250;
+    private static final int GRID_ROWS = 3;
+    private static final int GRID_COLS = 1;
+    private static final int GRID_GAP_H = 5;
+    private static final int GRID_GAP_V = 5;
+
+    public static void main(String[] args) {
+        ProducerConsumerApp app = new ProducerConsumerApp();
+        app.setVisible(true);
+    }
+
+    public ProducerConsumerApp() {
+        setTitle("מטלה מקביליות - בעיית יצרן וצרכן");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
+        setLayout(new BorderLayout());
+
+        // יצירת המשאב המשותף (המחסן)
+        Warehouse warehouse = new Warehouse();
+
+        // יצירת פאנלים צדדיים באמצעות מתודת העזר
+        JPanel farmersContainer = createSidePanel("חקלאים (יצרנים)");
+        JPanel driversContainer = createSidePanel("נהגים (צרכנים)");
+
+        // יצירת חקלאים והפעלת הת'רדים שלהם
+        for (int i = 1; i <= NUM_FARMERS; i++) {
+            FarmerPanel panel = new FarmerPanel("חקלאי " + i);
+            farmersContainer.add(panel);
+            new FarmerThread(warehouse, panel).start();
         }
 
-        public ProducerConsumerApp()
-        {
-            setTitle("מטלה מקביליות - בעיית יצרן וצרכן");
-            setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            setSize(1000, 650);
-            setLayout(new BorderLayout());
+        // יצירת נהגים והפעלת הת'רדים שלהם
+        for (int i = 1; i <= NUM_DRIVERS; i++) {
+            DriverPanel panel = new DriverPanel("נהג " + i);
+            driversContainer.add(panel);
+            new DriverThread(warehouse, panel).start();
+        }
 
-             // יצירת המשאב המשותף (המחסן)
-            Warehouse warehouse = new Warehouse();
+        // כפתורים לשליטה על המחסן
+        JPanel buttonsPanel = new JPanel();
+        JButton btnIncrease = new JButton("הגדל קיבולת מחסן");
+        JButton btnDecrease = new JButton("הקטן קיבולת מחסן");
 
-            // פאנל לחקלאים (צד ימין)
-            JPanel farmersContainer = new JPanel();
-            farmersContainer.setLayout(new GridLayout(3, 1, 5, 5));
-            farmersContainer.setBorder(BorderFactory.createTitledBorder("חקלאים (יצרנים)"));
-            farmersContainer.setPreferredSize(new Dimension(250, 0));
-
-            // פאנל לנהגים (צד שמאל)
-            JPanel driversContainer = new JPanel();
-            driversContainer.setLayout(new GridLayout(3, 1, 5, 5));
-            driversContainer.setBorder(BorderFactory.createTitledBorder("נהגים (צרכנים)"));
-            driversContainer.setPreferredSize(new Dimension(250, 0));
-
-            // יצירת חקלאים (ירושה ופולימורפיזם)
-            for (int i = 1; i <= 3; i = i + 1)
-            {
-                FarmerPanel panel = new FarmerPanel("חקלאי " + i);
-                farmersContainer.add(panel);
-                FarmerThread farmer = new FarmerThread(warehouse, panel);
-                farmer.start();
-            }
-            // יצירת נהגים (ירושה ופולימורפיזם)
-            for (int i = 1; i <= 3; i = i + 1)
-            {
-                DriverPanel panel = new DriverPanel("נהג " + i);
-                driversContainer.add(panel);
-                DriverThread driver = new DriverThread(warehouse, panel);
-                driver.start();
-            }
-            // כפתורים לשליטה על המחסן (למטה)
-            JPanel buttonsPanel = new JPanel();
-            JButton btnIncrease = new JButton("הגדל קיבולת מחסן");
-            JButton btnDecrease = new JButton("הקטן קיבולת מחסן");
-
-             // מאזין לכפתור הגדלה
-            btnIncrease.addActionListener(new ActionListener() {
+        // מאזין לכפתור הגדלה
+        btnIncrease.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 warehouse.increaseCapacity();
@@ -64,7 +66,7 @@ import java.awt.event.ActionListener;
         });
 
         // מאזין לכפתור הקטנה
-            btnDecrease.addActionListener(new ActionListener() {
+        btnDecrease.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 warehouse.decreaseCapacity();
@@ -73,10 +75,17 @@ import java.awt.event.ActionListener;
         buttonsPanel.add(btnIncrease);
         buttonsPanel.add(btnDecrease);
 
-        // הוספת הרכיבים לחלון הראשי
         add(driversContainer, BorderLayout.WEST); // נהגים משמאל
         add(warehouse, BorderLayout.CENTER);      // מחסן באמצע
         add(farmersContainer, BorderLayout.EAST); // חקלאים מימין
         add(buttonsPanel, BorderLayout.SOUTH);    // כפתורים למטה
+    }
+
+    private JPanel createSidePanel(String title) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridLayout(GRID_ROWS, GRID_COLS, GRID_GAP_H, GRID_GAP_V));
+        panel.setBorder(BorderFactory.createTitledBorder(title));
+        panel.setPreferredSize(new Dimension(SIDE_PANEL_WIDTH, 0));
+        return panel;
     }
 }

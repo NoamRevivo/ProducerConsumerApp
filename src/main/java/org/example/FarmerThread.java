@@ -2,6 +2,7 @@ package org.example;
 
 public class FarmerThread extends WorkerThread
 {
+    public final int BOUND=3000;
     public FarmerThread(Warehouse warehouse, FarmerPanel panel)
     {
         super(warehouse, panel);
@@ -10,7 +11,7 @@ public class FarmerThread extends WorkerThread
     protected boolean doWork() throws InterruptedException
     {
         myPanel.updateStatus("קוטף תפוזים בשדה...");
-        int pickingTime = randomGenerator.nextInt(3000);
+        int pickingTime = randomGenerator.nextInt(BOUND);
         Thread.sleep(pickingTime);
         myPanel.updateStatus("ממתין להכניס למחסן...");
         long waitTimeNow = warehouse.putOrange(totalWaitTime);

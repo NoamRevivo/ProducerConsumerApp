@@ -1,6 +1,7 @@
 package org.example;
 public class DriverThread extends WorkerThread
 {
+    public final int BOUND=2000;
     public DriverThread(Warehouse warehouse, DriverPanel panel)
     {
         super(warehouse, panel);

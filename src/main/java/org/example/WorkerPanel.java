@@ -7,10 +7,12 @@ public abstract class WorkerPanel extends JPanel
     private JLabel lblStatus;
     private JLabel lblCount;
     private String actionPrefix;
+    public final int ROWS=3;
+    public final int COLS=1;
     public WorkerPanel(String name, Color backgroundColor, String actionPrefix)
     {
         this.actionPrefix = actionPrefix;
-        setLayout(new GridLayout(3, 1));
+        setLayout(new GridLayout(ROWS, COLS));
         setBorder(BorderFactory.createLineBorder(Color.BLACK));
         setBackground(backgroundColor);
         lblName = new JLabel(name);
