@@ -1,5 +1,4 @@
 package org.example;
-
 import javax.swing.*;
 import java.awt.*;
 
@@ -11,7 +10,6 @@ public class Warehouse extends JPanel
     private static final int SPACING = 40;
     private static final int START_X = 20;
     private static final int START_Y = 70;
-
     private int capacity;
     private int currentOranges;
 
@@ -22,7 +20,6 @@ public class Warehouse extends JPanel
         setBorder(BorderFactory.createTitledBorder("מחסן מרכזי"));
     }
 
-    // מתודה מסונכרנת לחקלאי (יצרן)
     public synchronized long putOrange(long totalWaitTimeSoFar) throws InterruptedException
     {
         long startTime = System.currentTimeMillis();
@@ -82,17 +79,14 @@ public class Warehouse extends JPanel
             }
         }
     }
-
     @Override
     protected void paintComponent(Graphics g)
     {
         super.paintComponent(g);
         g.drawString("קיבולת מקסימלית: " + capacity, 20, 30);
         g.drawString("תפוזים במחסן כעת: " + currentOranges, 20, 50);
-
         int drawX = START_X;
         int drawY = START_Y;
-
         for (int i = 0; i < capacity; i = i + 1)
         {
             if (i < currentOranges)
@@ -105,7 +99,6 @@ public class Warehouse extends JPanel
                 g.setColor(Color.LIGHT_GRAY);
                 g.drawOval(drawX, drawY, ORANGE_SIZE, ORANGE_SIZE);
             }
-
             drawX = drawX + SPACING;
             if (drawX > getWidth() - 50)
             {
