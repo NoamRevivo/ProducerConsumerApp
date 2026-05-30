@@ -40,7 +40,6 @@ public class Warehouse extends JPanel
         return (endTime - startTime);
     }
 
-    // מתודה מסונכרנת לנהג (צרכן)
     public synchronized long takeOrange(long totalWaitTimeSoFar) throws InterruptedException
     {
         long startTime = System.currentTimeMillis();
@@ -77,8 +76,28 @@ public class Warehouse extends JPanel
                 capacity = capacity - 1;
                 repaint();
             }
+            else
+            {
+                // הקיבולת היא כבר 1 ולא ניתן להקטין יותר
+                SwingUtilities.invokeLater(() ->
+                        JOptionPane.showMessageDialog(this,
+                                "לא ניתן להקטין. קיבולת המחסן המינימלית היא 1.",
+                                "שגיאת קיבולת",
+                                JOptionPane.WARNING_MESSAGE)
+                );
+            }
+        }
+        else
+        {
+            SwingUtilities.invokeLater(() ->
+                    JOptionPane.showMessageDialog(this,
+                            "לא ניתן להקטין את המחסן מכיוון שהוא כרגע מלא בתפוזים.",
+                            "שגיאת קיבולת",
+                            JOptionPane.WARNING_MESSAGE)
+            );
         }
     }
+
     @Override
     protected void paintComponent(Graphics g)
     {
